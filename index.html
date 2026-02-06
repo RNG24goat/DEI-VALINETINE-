@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Valentine for Riddhi</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg1: #ffd6e7;
+      --bg2: #ffeef6;
+      --card: #ffffffcc;
+      --yes: #ff3b7a;
+      --yesHover: #ff1f68;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, var(--bg2), var(--bg1));
+      font-family: system-ui, sans-serif;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .card {
+      width: min(720px, 92vw);
+      padding: 26px 22px;
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border-radius: 22px;
+      text-align: center;
+      box-shadow: 0 18px 60px rgba(0,0,0,.15);
+      position: relative;
+      z-index: 10;
+    }
+
+    .art-container { position: relative; width: min(240px, 70vw); margin: 0 auto; }
+
+    .art { width: 100%; display: block; filter: drop-shadow(0 10px 14px rgba(0,0,0,.12)); }
+
+    /* ANIMATIONS */
+    .heart { animation: pulse 1.2s infinite ease-in-out; transform-origin: center; }
+    .cat { animation: bounce 2s infinite ease-in-out; transform-origin: center; }
+    
+    .whisker-l { animation: wiggleL 2s infinite ease-in-out; transform-origin: right; }
+    .whisker-r { animation: wiggleR 2s infinite ease-in-out; transform-origin: left; }
+
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    
+    @keyframes wiggleL { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-10deg); } }
+    @keyframes wiggleR { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(10deg); } }
+
+    /* Winking State */
+    .eye-wink { display: none; }
+    .winking #eyeRight { display: none; }
+    .winking .eye-wink { display: block; }
+
+    /* Paw Wave */
+    #paw { transform-origin: 190px 220px; display: none; }
+    .waving #paw { display: block; animation: wave 0.5s infinite ease-in-out; }
+    @keyframes wave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-20deg); } }
+
+    /* Speech Bubble */
+    .bubble {
+      position: absolute;
+      top: -20px;
+      right: -40px;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 15px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 2px solid #ff7aa2;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 10px;
+      border-width: 10px 10px 0;
+      border-style: solid;
+      border-color: white transparent transparent;
+    }
+
+    h1 { font-size: clamp(24px, 5vw, 42px); margin: 12px 0 18px; color: #333; }
+
+    .button-zone { position: relative; width: 100%; height: 250px; margin: 0 auto; touch-action: none; }
+
+    button {
+      position: absolute;
+      top: 50%;
+      padding: 16px 28px;
+      font-size: 18px;
+      font-weight: 800;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.14);
+      user-select: none;
+      transition: transform .12s ease, background .12s ease;
+    }
+
+    #yesBtn { left: 15%; background: var(--yes); color: #fff; z-index: 20; }
+    #noBtn { right: 15%; background: #e5e7eb; color: #111827; z-index: 19; }
+
+    .hint { margin-top: 10px; font-size: 13px; opacity: .7; font-style: italic; }
+    .result { display: none; margin-top: 18px; animation: pop .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  </style>
+</head>
+
+<body>
+  <canvas id="confettiCanvas"></canvas>
+
+  <audio id="bgMusic">
+    <source src="Frankie Valli - Can't Take My Eyes Off You (Official Audio) - RHINO.mp3" type="audio/mpeg">
+  </audio>
+
+  <main class="card">
+    <div class="art-container">
+      <div id="bubble" class="bubble">Wait, what? 🤨</div>
+      <svg id="catSvg" class="art" viewBox="0 0 320 300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="fur" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#f7c7a1"/><stop offset="100%" stop-color="#f2a97b"/>
+          </linearGradient>
+          <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#ff4d7d"/><stop offset="100%" stop-color="#ff1f68"/>
+          </linearGradient>
+        </defs>
+        
+        <path class="heart" d="M160 38 C160 22 182 22 192 38 C202 22 224 24 224 44 C224 72 192 88 192 100 C192 88 160 72 160 38Z" fill="url(#heartGrad)"/>
+        
+        <g class="cat">
+          <ellipse cx="160" cy="195" rx="90" ry="65" fill="url(#fur)"/>
+          <circle cx="160" cy="135" r="55" fill="url(#fur)"/>
+          <polygon points="112,98 92,52 140,82" fill="#f2a97b"/>
+          <polygon points="208,98 228,52 180,82" fill="#f2a97b"/>
+          
+          <circle cx="125" cy="150" r="8" fill="#ffb3c1" opacity="0.6"/>
+          <circle cx="195" cy="150" r="8" fill="#ffb3c1" opacity="0.6"/>
+
+          <g stroke="#000" stroke-width="1.5" opacity="0.4">
+            <line class="whisker-l" x1="115" y1="145" x2="85" y2="140" />
+            <line class="whisker-l" x1="115" y1="150" x2="85" y2="150" />
+            <line class="whisker-r" x1="205" y1="145" x2="235" y2="140" />
+            <line class="whisker-r" x1="205" y1="150" x2="235" y2="150" />
+          </g>
+
+          <circle id="eyeLeft" cx="145" cy="135" r="6" fill="#000"/>
+          <circle id="eyeRight" cx="175" cy="135" r="6" fill="#000"/>
+          <path class="eye-wink" d="M168 135 Q175 142 182 135" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+          <polygon points="160,145 152,155 168,155" fill="#ff7aa2"/>
+          <path d="M160 155 C154 162 144 162 140 158" stroke="#000" stroke-width="2" fill="none"/>
+          <path d="M160 155 C166 162 176 162 180 158" stroke="#000" stroke-width="2" fill="none"/>
+          
+          <g id="paw">
+            <circle cx="210" cy="180" r="15" fill="url(#fur)"/>
+            <path d="M205 175 Q210 170 215 175" stroke="#000" stroke-width="1" fill="none"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <h1 id="mainTitle">Riddhi, will you be my valentine?</h1>
+
+    <section class="button-zone" id="zone">
+      <button id="yesBtn">Yes</button>
+      <button id="noBtn">No</button>
+    </section>
+
+    <div class="hint" id="hint"> If you clicked “No”, js say you hate me twin 😈</div>
+
+    <section class="result" id="result">
+      <h2>YAYYYYY! 🎺❤️</h2>
+      <p>I LOVE YOU RIDDHIIIII SEE U ON 13TH :3.</p>
+      <img src="https://media.giphy.com/media/W1hd3uXRIbddu/giphy.gif" alt="Fireworks" width="300" />
+    </section>
+  </main>
+
+  <script>
+    const zone = document.getElementById("zone");
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+    const result = document.getElementById("result");
+    const hint = document.getElementById("hint");
+    const music = document.getElementById("bgMusic");
+    const catSvg = document.getElementById("catSvg");
+    const bubble = document.getElementById("bubble");
+    const confettiCanvas = document.getElementById("confettiCanvas");
+
+    const phrases = ["Hey! 😡", "Excuse me?", "Wrong button!", "Are you sure? 🥺", "Try again...", "Not happening!"];
+
+    function resizeConfettiCanvas() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      confettiCanvas.width = Math.floor(window.innerWidth * dpr);
+      confettiCanvas.height = Math.floor(window.innerHeight * dpr);
+    }
+    resizeConfettiCanvas();
+    window.addEventListener("resize", resizeConfettiCanvas);
+    const confettiInstance = confetti.create(confettiCanvas, { resize: false, useWorker: true });
+
+    function fullScreenConfetti() {
+      const end = Date.now() + 3000;
+      (function frame() {
+        confettiInstance({ particleCount: 8, spread: 80, origin: { x: Math.random(), y: Math.random() * 0.4 } });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+    }
+
+    // RUN AWAY LOGIC
+    let yesScale = 1;
+    function moveNo() {
+      const z = zone.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+      const maxX = z.width - b.width;
+      const maxY = z.height - b.height;
+
+      noBtn.style.left = Math.random() * maxX + "px";
+      noBtn.style.top = Math.random() * maxY + "px";
+      noBtn.style.right = "auto";
+      noBtn.style.transform = "none";
+
+      yesScale = Math.min(2.5, yesScale + 0.15);
+      yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
+
+      // Show speech bubble
+      bubble.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+      bubble.style.opacity = "1";
+      setTimeout(() => { bubble.style.opacity = "0"; }, 1000);
+    }
+
+    noBtn.addEventListener("mouseover", moveNo);
+    noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveNo(); });
+
+    // YES CLICK
+    yesBtn.addEventListener("click", () => {
+      music.currentTime = 69; 
+      music.play().catch(e => console.log("Music blocked by browser."));
+
+      music.addEventListener("timeupdate", function() {
+        if (this.currentTime >= 125) this.pause();
+      });
+
+      // UI Changes
+      zone.style.display = "none";
+      hint.style.display = "none";
+      document.getElementById("mainTitle").style.display = "none";
+      result.style.display = "block";
+      
+      // Cat Animations
+      catSvg.classList.add("winking");
+      catSvg.parentElement.classList.add("waving");
+      
+      fullScreenConfetti();
+    });
+  </script>
+</body>
+</html>
+</body>
+</html>
