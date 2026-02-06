@@ -27,6 +27,11 @@
       font-family: system-ui, sans-serif;
       overflow: hidden;
       padding: 16px;
+      transition: background 3s ease; /* Sunset transition */
+    }
+
+    body.sunset {
+      background: radial-gradient(circle at top, #ff9a9e, #fad0c4, #ffd1ff);
     }
 
     #confettiCanvas {
@@ -62,21 +67,50 @@
       filter: drop-shadow(0 10px 14px rgba(0,0,0,.12));
     }
 
-    .heart { animation: pulse 1.2s infinite ease-in-out; transform-origin: center; }
+    /* Animations */
+    .heart-main { animation: pulse 1.2s infinite ease-in-out; transform-origin: center; }
     .cat { animation: bounce 2s infinite ease-in-out; transform-origin: center; }
-
-    /* New Animations */
     .whisker-l { animation: wiggleL 2s infinite ease-in-out; transform-origin: right; }
     .whisker-r { animation: wiggleR 2s infinite ease-in-out; transform-origin: left; }
     
     @keyframes wiggleL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-10deg); } }
     @keyframes wiggleR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(10deg); } }
 
+    #tail { animation: wag 1.5s infinite ease-in-out; transform-origin: 100px 220px; }
+    @keyframes wag { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(15deg); } }
+
     #pawWave { display: none; transform-origin: 190px 210px; }
     .is-celebrating #pawWave { display: block; animation: wave 0.5s infinite ease-in-out; }
     @keyframes wave { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-25deg); } }
 
-    /* Speech Bubble Styles */
+    /* Floating Hearts */
+    .floating-heart {
+      position: absolute;
+      color: #ff3b7a;
+      pointer-events: none;
+      animation: floatUp 3s linear forwards;
+      z-index: 100;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+    }
+
+    /* Paw Prints */
+    .paw-print {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      background: rgba(255, 59, 122, 0.3);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+      transform: translate(-50%, -50%);
+      animation: fadeOut 1s forwards;
+    }
+    @keyframes fadeOut { to { opacity: 0; } }
+
+    /* Speech Bubble */
     #speechBubble {
       position: absolute;
       top: -10px;
@@ -103,29 +137,12 @@
       border-color: #ff7aa2 transparent transparent;
     }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.15); }
-    }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
+    h1 { font-size: clamp(24px, 5vw, 42px); margin: 12px 0 18px; color: #333; }
 
-    h1 {
-      font-size: clamp(24px, 5vw, 42px);
-      margin: 12px 0 18px;
-      color: #333;
-    }
-
-    .button-zone {
-      position: relative;
-      width: 100%;
-      height: 250px;
-      margin: 0 auto;
-      touch-action: none;
-    }
+    .button-zone { position: relative; width: 100%; height: 250px; margin: 0 auto; touch-action: none; }
 
     button {
       position: absolute;
@@ -141,37 +158,14 @@
       transition: transform .12s ease, background .12s ease;
     }
 
-    #yesBtn {
-      left: 15%;
-      background: var(--yes);
-      color: #fff;
-      z-index: 20;
-    }
+    #yesBtn { left: 15%; background: var(--yes); color: #fff; z-index: 20; }
+    #noBtn { right: 15%; background: #e5e7eb; color: #111827; z-index: 19; }
 
-    #noBtn {
-      right: 15%;
-      background: #e5e7eb;
-      color: #111827;
-      z-index: 19;
-    }
+    .result { display: none; margin-top: 18px; animation: pop .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    .hint {
-      margin-top: 10px;
-      font-size: 13px;
-      opacity: .7;
-      font-style: italic;
-    }
-
-    .result {
-      display: none;
-      margin-top: 18px;
-      animation: pop .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes pop {
-      from { transform: scale(0.5); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
+    /* Decoration */
+    .star { position: absolute; color: #ffd700; font-size: 20px; animation: pulse 2s infinite; }
   </style>
 </head>
 
@@ -182,8 +176,12 @@
     <source src="Frankie Valli - Can't Take My Eyes Off You (Official Audio) - RHINO.mp3" type="audio/mpeg">
   </audio>
 
+  <div class="star" style="top:10%; left:10%;">✨</div>
+  <div class="star" style="top:20%; right:15%;">⭐</div>
+  <div class="star" style="bottom:15%; left:5%;">✨</div>
+
   <main class="card">
-    <div class="art-wrapper">
+    <div class="art-wrapper" id="catArea">
       <div id="speechBubble">Nice try! 😋</div>
       <svg id="catSvg" class="art" viewBox="0 0 320 300" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -194,7 +192,11 @@
             <stop offset="0%" stop-color="#ff4d7d"/><stop offset="100%" stop-color="#ff1f68"/>
           </linearGradient>
         </defs>
-        <path class="heart" d="M160 38 C160 22 182 22 192 38 C202 22 224 24 224 44 C224 72 192 88 192 100 C192 88 160 72 160 38Z" fill="url(#heartGrad)"/>
+        
+        <path id="tail" d="M100 220 Q70 200 80 170" stroke="#f2a97b" stroke-width="12" fill="none" stroke-linecap="round" />
+
+        <path class="heart-main" d="M160 38 C160 22 182 22 192 38 C202 22 224 24 224 44 C224 72 192 88 192 100 C192 88 160 72 160 38Z" fill="url(#heartGrad)"/>
+        
         <g class="cat">
           <ellipse cx="160" cy="195" rx="90" ry="65" fill="url(#fur)"/>
           <circle cx="160" cy="135" r="55" fill="url(#fur)"/>
@@ -252,8 +254,53 @@
     const catSvg = document.getElementById("catSvg");
     const eyeR = document.getElementById("eyeR");
     const eyeWink = document.getElementById("eyeWink");
+    const catArea = document.getElementById("catArea");
 
-    const messages = ["NUH UH! 🐾", "Bro...!", "Please!", "Try again! 😜", "Hehehe!", "AIYEEEEE!"];
+    const messages = ["Nuh uh! 🐾", "Wrong Button!", "Bruh!", "Try again! 😜", "Hehehe!", "WHY!"];
+
+    // Sound Synthesizer (Meow/Kiss)
+    const playSound = (type) => {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      if(type === 'meow') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
+      } else {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.1);
+      }
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    };
+
+    // Paw trail logic
+    catArea.addEventListener('mousemove', (e) => {
+      if(Math.random() > 0.8) {
+        const paw = document.createElement('div');
+        paw.className = 'paw-print';
+        paw.style.left = e.clientX + 'px';
+        paw.style.top = e.clientY + 'px';
+        document.body.appendChild(paw);
+        setTimeout(() => paw.remove(), 1000);
+      }
+    });
+
+    function spawnHeart() {
+      const h = document.createElement('div');
+      h.className = 'floating-heart';
+      h.innerHTML = '💕';
+      h.style.left = (Math.random() * 60 + 20) + '%';
+      h.style.top = '40%';
+      catArea.appendChild(h);
+      setTimeout(() => h.remove(), 3000);
+    }
 
     // CONFETTI SETUP
     function resizeConfettiCanvas() {
@@ -289,40 +336,40 @@
       yesScale = Math.min(2.5, yesScale + 0.15);
       yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
 
-      // Show Speech Bubble
       bubble.innerText = messages[Math.floor(Math.random() * messages.length)];
       bubble.style.opacity = "1";
       setTimeout(() => { bubble.style.opacity = "0"; }, 800);
+      spawnHeart();
     }
 
     noBtn.addEventListener("mouseover", moveNo);
     noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveNo(); });
 
-    // YES CLICK WITH TIMESTAMP LOGIC
+    // YES CLICK
     yesBtn.addEventListener("click", () => {
+      playSound('meow');
+      setTimeout(() => playSound('kiss'), 300);
+      
       music.currentTime = 69; 
       music.play().catch(e => console.log("Playback failed:", e));
 
       music.addEventListener("timeupdate", function() {
-        if (this.currentTime >= 125) {
-          this.pause();
-        }
+        if (this.currentTime >= 125) { this.pause(); }
       });
 
-      // UI Changes
+      document.body.classList.add('sunset');
       zone.style.display = "none";
       hint.style.display = "none";
       result.style.display = "block";
       document.querySelector('h1').style.display = "none";
       
-      // Animations
       catSvg.classList.add('is-celebrating');
       eyeR.style.display = "none";
       eyeWink.style.display = "block";
       
+      setInterval(spawnHeart, 400);
       fullScreenConfetti();
     });
   </script>
 </body>
 </html>
-
