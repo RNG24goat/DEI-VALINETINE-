@@ -27,7 +27,7 @@
       font-family: system-ui, sans-serif;
       overflow: hidden;
       padding: 16px;
-      transition: background 3s ease; /* Sunset transition */
+      transition: background 3s ease;
     }
 
     body.sunset {
@@ -85,15 +85,15 @@
 
     /* Floating Hearts */
     .floating-heart {
-      position: absolute;
-      color: #ff3b7a;
+      position: fixed;
+      font-size: 20px;
       pointer-events: none;
-      animation: floatUp 3s linear forwards;
-      z-index: 100;
+      z-index: 1000;
+      animation: floatUp 1.5s ease-out forwards;
     }
     @keyframes floatUp {
-      0% { transform: translateY(0) scale(1); opacity: 1; }
-      100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+      100% { transform: translate(-50%, -150px) scale(1.5); opacity: 0; }
     }
 
     /* Paw Prints */
@@ -110,7 +110,6 @@
     }
     @keyframes fadeOut { to { opacity: 0; } }
 
-    /* Speech Bubble */
     #speechBubble {
       position: absolute;
       top: -10px;
@@ -164,7 +163,6 @@
     .result { display: none; margin-top: 18px; animation: pop .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    /* Decoration */
     .star { position: absolute; color: #ffd700; font-size: 20px; animation: pulse 2s infinite; }
   </style>
 </head>
@@ -258,7 +256,6 @@
 
     const messages = ["Nuh uh! 🐾", "Wrong Button!", "Bruh!", "Try again! 😜", "Hehehe!", "WHY!"];
 
-    // Sound Synthesizer (Meow/Kiss)
     const playSound = (type) => {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -280,7 +277,7 @@
       osc.stop(ctx.currentTime + 0.2);
     };
 
-    // Paw trail logic
+    // Paw trail logic (General)
     catArea.addEventListener('mousemove', (e) => {
       if(Math.random() > 0.8) {
         const paw = document.createElement('div');
@@ -292,6 +289,20 @@
       }
     });
 
+    // HEART TRAIL LOGIC (NEW FEATURE)
+    function createHeartTrail(e) {
+      const heart = document.createElement('div');
+      heart.className = 'floating-heart';
+      heart.innerHTML = ['❤️', '💖', '💕', '💗'][Math.floor(Math.random() * 4)];
+      heart.style.left = e.clientX + 'px';
+      heart.style.top = e.clientY + 'px';
+      document.body.appendChild(heart);
+      setTimeout(() => heart.remove(), 1500);
+    }
+
+    yesBtn.addEventListener('mousemove', createHeartTrail);
+    yesBtn.addEventListener('click', createHeartTrail);
+
     function spawnHeart() {
       const h = document.createElement('div');
       h.className = 'floating-heart';
@@ -302,7 +313,6 @@
       setTimeout(() => h.remove(), 3000);
     }
 
-    // CONFETTI SETUP
     function resizeConfettiCanvas() {
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       confettiCanvas.width = Math.floor(window.innerWidth * dpr);
@@ -320,7 +330,6 @@
       })();
     }
 
-    // RUN AWAY LOGIC
     let yesScale = 1;
     function moveNo() {
       const z = zone.getBoundingClientRect();
@@ -345,7 +354,6 @@
     noBtn.addEventListener("mouseover", moveNo);
     noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveNo(); });
 
-    // YES CLICK
     yesBtn.addEventListener("click", () => {
       playSound('meow');
       setTimeout(() => playSound('kiss'), 300);
